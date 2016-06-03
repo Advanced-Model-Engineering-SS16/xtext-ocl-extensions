@@ -1,0 +1,77 @@
+
+grammar at.ac.tuwien.big.forms.form.Form with org.eclipse.xtext.common.Terminals
+
+import "http://www.big.tuwien.ac.at/forms" 
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+FormModel returns FormModel:
+	(forms+=Form (forms+=Form)*)?;
+
+Form returns Form:
+	(welcomeForm?='welcome')? 'form' name=ID title=STRING ('(' description=STRING ')')? 'handles' entity=[Entity|QualifiedName]  
+	'{'
+		(pages+=Page (pages+=Page)*)?
+	'}';
+	
+Page returns Page:
+	'page' title=STRING
+	'{' 
+		(pageElements+=PageElement (',' pageElements+=PageElement)*)?
+	'}' ('with' condition=Condition)?;
+
+PageElement returns PageElement:
+	(AttributePageElement | RelationshipPageElement) ('with' condition=Condition)?;
+
+AttributePageElement returns AttributePageElement:
+	TextField | TextArea | SelectionField | DateSelectionField | TimeSelectionField | Column;
+	
+RelationshipPageElement returns RelationshipPageElement:
+	 List | Table;
+	
+TextField returns TextField:
+	'text-field' elementID=ID label=STRING ('format' format=STRING)? 'handles' attribute=[Attribute|QualifiedName];
+	
+TextArea returns TextArea:
+	'text-area' elementID=ID label=STRING 'handles' attribute=[Attribute|QualifiedName];
+
+SelectionField returns SelectionField:
+	'selection-field' elementID=ID label=STRING 'handles' attribute=[Attribute|QualifiedName];
+
+DateSelectionField returns DateSelectionField:
+	'date-selection-field' elementID=ID label=STRING 'handles' attribute=[Attribute|QualifiedName];
+
+TimeSelectionField returns TimeSelectionField:
+	'time-selection-field' elementID=ID label=STRING 'handles' attribute=[Attribute|QualifiedName];
+	
+List returns List:
+	'list' elementID=ID label=STRING 'handles' relationship=[Relationship|QualifiedName] 'edits' editingForm=[Form|QualifiedName];
+
+
+Table returns Table:
+  	'table' elementID=ID label=STRING 'handles' relationship=[Relationship|QualifiedName]
+	('{'
+		(columns+=Column ("," columns+=Column)*)?
+	'}')? 'edits' editingForm=[Form|QualifiedName];
+
+Column returns Column:
+	'column' elementID=ID label=STRING 'handles' attribute=[Attribute|QualifiedName];
+
+Condition returns Condition:
+	AttributeValueCondition | CompositeCondition;
+
+AttributeValueCondition returns AttributeValueCondition:
+	'attribute-condition' conditionID=ID ':' 
+	attribute=[Attribute|QualifiedName] '==' value=STRING '?' type=ConditionType;
+
+CompositeCondition returns CompositeCondition:
+	'composite-condition' conditionID=ID ':' 
+	'(' composedConditions+=Condition compositionType=CompositeConditionType composedConditions+=Condition ')' '?' type=ConditionType;
+	
+enum CompositeConditionType returns CompositeConditionType:
+				And = 'and' | Or = 'or';
+
+enum ConditionType returns ConditionType:
+				Hide = 'Hide' | Show = 'Show' | Enable = 'Enable' | Disable = 'Disable' | None = 'None';
+				
+QualifiedName returns ecore::EString: 
+	ID (=>'.'ID)*;

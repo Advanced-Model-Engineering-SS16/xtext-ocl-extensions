@@ -1,0 +1,45 @@
+
+grammar at.ac.tuwien.big.forms.entity.Entity with org.eclipse.xtext.common.Terminals
+
+import "http://www.big.tuwien.ac.at/forms" 
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+EntityModel returns EntityModel:
+	(entityModelElements+=EntityModelElement (entityModelElements+=EntityModelElement)*)?;
+
+EntityModelElement returns EntityModelElement:
+	Entity | Enumeration;
+
+Entity returns Entity:
+	'entity' name=ID ('extends' superType=[Entity|QualifiedName])?
+	'{'
+		'id' id=[Attribute|QualifiedName] ','
+		(features+=Feature (',' features+=Feature)*)?
+	'}';
+	
+Feature returns Feature:
+	Attribute | Relationship;
+	
+Relationship returns Relationship:
+	'reference' name=ID ':' target=[Entity|QualifiedName] '[' lowerBound=EInt '..' upperBound=EInt ']' ('opposite-of' opposite=[Relationship|QualifiedName])? ;
+
+Attribute returns Attribute:
+	'attribute' name=ID(mandatory?='*')? ':' type=AttributeType (':' enumeration=[Enumeration|QualifiedName])?;
+
+Enumeration returns Enumeration:
+	'enum' name=ID
+	'{'
+		literals+=Literal (',' literals+=Literal)* 
+	'}';
+	
+Literal returns Literal:
+	name=ID '=' value=STRING;
+
+enum AttributeType returns AttributeType:
+	String = 'String' | Integer = 'Integer' | Text = 'Text' | Date = 'Date' | Time = 'Time' | Email = 'Email' | Boolean = 'Boolean' | Year = 'Year' | None = 'None';
+	
+EInt returns ecore::EInt:
+	'-'? INT;
+
+QualifiedName returns ecore::EString: 
+	ID (=> '.'ID)*;
